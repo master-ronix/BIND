@@ -1,0 +1,40 @@
+# Netlify & Cloudflare Pages both read this file automatically.
+# Vercel users: see vercel.json instead (same rules, different format).
+# CDN-Cache-Control is read specifically by Cloudflare's edge (ignored,
+# harmlessly, by Netlify) — it lets the edge cache longer than browsers do.
+# Cloudflare Pages purges its edge cache automatically on every new deploy,
+# so this is safe even though the content is "static forever."
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
+  Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://discord.com; img-src 'self' data: https://cdn.discordapp.com https://i.ytimg.com; frame-src https://www.youtube-nocookie.com; script-src 'self'; base-uri 'self'; form-action 'self'
+
+/assets/css/*
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000
+
+/assets/js/*
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000
+
+/assets/images/*
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+  CDN-Cache-Control: public, max-age=3600
+
+/favicon.ico
+  Cache-Control: public, max-age=604800
+
+/llms.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/plain; charset=utf-8
+
+/llms-full.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/plain; charset=utf-8

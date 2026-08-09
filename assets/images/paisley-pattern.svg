@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="130">
+<g transform="translate(15,10) rotate(145 50 50)">
+  <path d="M50,8 C33,8 20,21 20,38 C20,58 50,95 50,95 C50,95 80,58 80,38 C80,21 67,8 50,8 Z" fill="none" stroke="#F8F0E4" stroke-width="1.15"/>
+  <path d="M50,95 C57,87 58,78 51,75 C46,73 42,77 45,81" fill="none" stroke="#F8F0E4" stroke-width="1.15"/>
+</g>
+<g transform="translate(78,68) rotate(145 50 50) scale(0.5)" opacity="0.55">
+  <path d="M50,8 C33,8 20,21 20,38 C20,58 50,95 50,95 C50,95 80,58 80,38 C80,21 67,8 50,8 Z" fill="none" stroke="#F8F0E4" stroke-width="1.6"/>
+  <path d="M50,95 C57,87 58,78 51,75 C46,73 42,77 45,81" fill="none" stroke="#F8F0E4" stroke-width="1.6"/>
+</g>
+</svg>
