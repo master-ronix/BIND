@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Build v8 CSS — navigation redesign, table fixes, SEO-driven styles, missing variables."""
+"""v8 CSS — IDEMPOTENT: navigation redesign, table fixes, missing variables.
+Only appends if the v8 marker doesn't exist, preventing duplication on re-runs."""
 import re, os, sys
 
-# Use current directory (CI checkout) or local repo path
 repo = os.environ.get('REPO_PATH', '.')
 css_path = os.path.join(repo, "assets/css/style.css")
 
@@ -16,20 +16,22 @@ with open(css_path, 'r') as f:
 original_len = len(css)
 changes = []
 
-# ============================================================
+# IDEMPOTENCY: Skip entirely if v8 CSS already applied
+V8_MARKER = "v8 NAVIGATION REDESIGN"
+if V8_MARKER in css:
+    print(f"v8 CSS already applied (marker found). Skipping. Size: {len(css)}")
+    sys.exit(0)
+
 # FIX 1: Add missing --moon variable if not defined
-# ============================================================
 if '--moon' not in css:
-    moon_insert = "  --moon: #E8D5B5;"
-    # Insert after --paper definition
     css = re.sub(
         r'(--paper:\s*#[0-9a-fA-F]{6};)',
-        r'\1\n' + moon_insert,
+        r'\1\n  --moon: #E8D5B5;',
         css, count=1
     )
     changes.append("added --moon color variable")
 
-# Also ensure common shorthand variables exist
+# FIX 2: Add shorthand variables if missing
 shorthand_defs = {
     '--paper-08': 'rgba(250,241,228,.08)',
     '--paper-14': 'rgba(250,241,228,.14)',
@@ -47,7 +49,6 @@ shorthand_defs = {
 }
 for var_name, var_val in shorthand_defs.items():
     if var_name not in css:
-        # Insert after the last :root variable
         css = re.sub(
             r'(:root\s*\{[^}]*?)(\})',
             lambda m: m.group(1) + f'\n  {var_name}: {var_val};' + m.group(2),
@@ -55,9 +56,8 @@ for var_name, var_val in shorthand_defs.items():
         )
         changes.append(f"added {var_name}")
 
-# ============================================================
-# FIX 2: Navigation redesign — reactive, animated, interactive
-# ============================================================
+# FIX 3: Navigation redesign CSS — matched to ACTUAL HTML structure
+# The HTML uses SVG icon-open/icon-close inside .nav-toggle
 nav_css = r"""
 
 /* ==========================================================================
@@ -79,7 +79,7 @@ nav_css = r"""
   -webkit-backdrop-filter: blur(0px);
 }
 .site-header.is-scrolled {
-  background: color-mix(in srgb, var(--ink-900) 85%, transparent);
+  background: color-mix(in srgb, var(--ink-900, #1B1417) 85%, transparent);
   backdrop-filter: blur(16px) saturate(1.4);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   box-shadow: 0 1px 0 rgba(250,241,228,.08), 0 8px 32px rgba(0,0,0,.3);
@@ -130,14 +130,11 @@ nav_css = r"""
   }
 }
 
-/* ---- Nav links: desktop pill-style with magnetic effect ---- */
+/* ---- Nav links: desktop pill-style ---- */
 .nav-links {
   display: flex;
   align-items: center;
   gap: .15rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 .nav-links a {
   position: relative;
@@ -185,7 +182,7 @@ nav_css = r"""
   width: 60%;
 }
 
-/* ---- Nav actions: right side ---- */
+/* ---- Nav actions ---- */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -212,7 +209,7 @@ nav_css = r"""
   }
 }
 
-/* ---- Hamburger toggle: animated morph ---- */
+/* ---- Hamburger toggle: SVG icon swap ---- */
 .nav-toggle {
   display: none;
   position: relative;
@@ -224,31 +221,30 @@ nav_css = r"""
   padding: 0;
   color: #FAF1E4;
 }
-.nav-toggle .toggle-line {
+.nav-toggle svg {
   position: absolute;
+  top: 50%;
   left: 50%;
   width: 22px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  transform: translateX(-50%);
-  transition: 
-    transform .35s cubic-bezier(.16,1,.3,1),
-    opacity .2s ease,
-    width .35s cubic-bezier(.16,1,.3,1);
+  height: 22px;
+  transform: translate(-50%, -50%);
+  transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .2s ease;
 }
-.nav-toggle .toggle-line:nth-child(1) { top: 13px; }
-.nav-toggle .toggle-line:nth-child(2) { top: 19px; width: 16px; }
-.nav-toggle .toggle-line:nth-child(3) { top: 25px; }
-.nav-toggle[aria-expanded="true"] .toggle-line:nth-child(1) {
-  transform: translateX(-50%) translateY(6px) rotate(45deg);
+.nav-toggle .icon-open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
 }
-.nav-toggle[aria-expanded="true"] .toggle-line:nth-child(2) {
+.nav-toggle .icon-close {
   opacity: 0;
-  width: 0;
+  transform: translate(-50%, -50%) scale(.5) rotate(-90deg);
 }
-.nav-toggle[aria-expanded="true"] .toggle-line:nth-child(3) {
-  transform: translateX(-50%) translateY(-6px) rotate(-45deg);
+.nav-toggle[aria-expanded="true"] .icon-open {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.5) rotate(90deg);
+}
+.nav-toggle[aria-expanded="true"] .icon-close {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
 }
 
 /* ---- Mobile menu: full-screen overlay with staggered links ---- */
@@ -281,8 +277,6 @@ nav_css = r"""
   visibility: visible;
   pointer-events: auto;
 }
-
-/* Staggered link animation */
 .mobile-menu a {
   display: block;
   padding: .8rem 2rem;
@@ -294,9 +288,7 @@ nav_css = r"""
   text-align: center;
   opacity: 0;
   transform: translateY(20px);
-  transition: 
-    color .25s ease,
-    background-color .25s ease;
+  transition: color .25s ease;
 }
 .mobile-menu[data-open="true"] a {
   animation: mobile-link-in .4s cubic-bezier(.16,1,.3,1) forwards;
@@ -316,15 +308,10 @@ nav_css = r"""
   to { opacity: 1; transform: translateY(0); }
 }
 @media (hover: hover) {
-  .mobile-menu a:hover {
-    color: #FF7C2E;
-  }
+  .mobile-menu a:hover { color: #FF7C2E; }
 }
-.mobile-menu a[aria-current="page"] {
-  color: #FF7C2E;
-}
+.mobile-menu a[aria-current="page"] { color: #FF7C2E; }
 
-/* Mobile menu backdrop */
 .mobile-menu-backdrop {
   position: fixed;
   inset: 0;
@@ -341,7 +328,6 @@ nav_css = r"""
   pointer-events: auto;
 }
 
-/* ---- Responsive breakpoint for nav ---- */
 @media (max-width: 880px) {
   .nav-links { display: none; }
   .nav-toggle { display: block; }
@@ -355,7 +341,7 @@ nav_css = r"""
   .mobile-menu-backdrop { display: none !important; }
 }
 
-/* ---- Data table: styled for readability ---- */
+/* ---- Data table ---- */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -372,9 +358,7 @@ nav_css = r"""
   text-align: left;
   caption-side: top;
 }
-.data-table thead {
-  background: rgba(250,241,228,.08);
-}
+.data-table thead { background: rgba(250,241,228,.08); }
 .data-table th {
   padding: .9rem 1.2rem;
   text-align: left;
@@ -392,16 +376,9 @@ nav_css = r"""
   color: #FAF1E4;
   vertical-align: top;
 }
-.data-table tbody tr {
-  transition: background-color .2s ease;
-}
-.data-table tbody tr:hover {
-  background: rgba(250,241,228,.05);
-}
-.data-table td:nth-child(2) {
-  font-weight: 600;
-  color: #FF7C2E;
-}
+.data-table tbody tr { transition: background-color .2s ease; }
+.data-table tbody tr:hover { background: rgba(250,241,228,.05); }
+.data-table td:nth-child(2) { font-weight: 600; color: #FF7C2E; }
 .data-table td:nth-child(3) {
   font-family: var(--font-mono, 'Space Mono', monospace);
   font-size: .8rem;
@@ -413,7 +390,7 @@ nav_css = r"""
   .data-table { display: block; overflow-x: auto; white-space: nowrap; }
 }
 
-/* ---- Review wall fix: ensure proper rendering ---- */
+/* ---- Review wall fix ---- */
 .review-wall {
   position: relative;
   overflow: hidden;
@@ -421,7 +398,7 @@ nav_css = r"""
   padding: 1rem 0;
 }
 
-/* ---- FAQ micro-formatting: H2 question + bolded answer ---- */
+/* ---- FAQ micro-formatting ---- */
 .faq-item {
   margin-bottom: 1.5rem;
   padding: 1.2rem 1.5rem;
@@ -434,10 +411,7 @@ nav_css = r"""
   border-color: rgba(250,241,228,.15);
   background: rgba(250,241,228,.06);
 }
-.faq-item .faq-answer {
-  font-weight: 600;
-  color: #FAF1E4;
-}
+.faq-item .faq-answer { font-weight: 600; color: #FAF1E4; }
 
 /* ---- Breadcrumb styling ---- */
 .breadcrumbs {
@@ -448,8 +422,6 @@ nav_css = r"""
   font-size: .8rem;
   color: rgba(250,241,228,.6);
   padding: .5rem 0;
-  list-style: none;
-  margin: 0;
 }
 .breadcrumbs ol {
   display: flex;
@@ -465,10 +437,7 @@ nav_css = r"""
   align-items: center;
   gap: .4rem;
 }
-.breadcrumbs li::after {
-  content: "\203A";
-  opacity: .4;
-}
+.breadcrumbs li::after { content: "\203A"; opacity: .4; }
 .breadcrumbs li:last-child::after { display: none; }
 .breadcrumbs a {
   color: rgba(250,241,228,.6);
@@ -478,34 +447,14 @@ nav_css = r"""
 .breadcrumbs a:hover { color: #FAF1E4; }
 .breadcrumbs li:last-child { color: #FAF1E4; }
 
-/* ---- Scroll spy indicator ---- */
-.scroll-spy-indicator {
-  position: fixed;
-  top: 68px;
-  left: 0;
-  width: 3px;
-  height: 0;
-  background: linear-gradient(180deg, #FF7C2E, #E64A82, #6247AA);
-  z-index: 999;
-  border-radius: 0 3px 3px 0;
-  transition: height .15s ease, top .15s ease;
-}
-
-/* ---- Focus trap styles for mobile menu ---- */
-.mobile-menu a:focus-visible {
-  outline: 3px solid #FF7C2E;
-  outline-offset: 4px;
-  border-radius: 10px;
-}
-
-/* ---- Body scroll lock when mobile menu is open ---- */
+/* ---- Body scroll lock ---- */
 body.nav-locked {
   overflow: hidden;
   position: fixed;
   width: 100%;
 }
 
-/* ---- Nav CTA enhanced ---- */
+/* ---- Nav CTA shimmer ---- */
 .nav-cta {
   position: relative;
   overflow: hidden;
@@ -519,9 +468,7 @@ body.nav-locked {
   transition: transform .5s cubic-bezier(.16,1,.3,1);
 }
 @media (hover: hover) {
-  .nav-cta:hover::before {
-    transform: translateX(100%);
-  }
+  .nav-cta:hover::before { transform: translateX(100%); }
 }
 
 /* ---- Skip link ---- */
@@ -538,9 +485,7 @@ body.nav-locked {
   border-radius: 0 0 12px 0;
   transition: top .2s ease;
 }
-.skip-link:focus {
-  top: 0;
-}
+.skip-link:focus { top: 0; }
 
 /* ---- Reading progress bar ---- */
 .reading-progress {
@@ -554,15 +499,23 @@ body.nav-locked {
   transition: width .1s linear;
 }
 
-/* ---- Content visibility for below-the-fold sections ---- */
+/* ---- Content visibility ---- */
 [data-cv="auto"] {
   content-visibility: auto;
   contain-intrinsic-size: auto 500px;
 }
 
 /* ---- View transition ---- */
-@view-transition {
-  navigation: auto;
+@view-transition { navigation: auto; }
+
+/* ---- Focus visibility ---- */
+.nav-links a:focus-visible,
+.nav-icon-btn:focus-visible,
+.nav-toggle:focus-visible,
+.mobile-menu a:focus-visible {
+  outline: 3px solid #FF7C2E;
+  outline-offset: 4px;
+  border-radius: 10px;
 }
 
 """
@@ -570,7 +523,6 @@ body.nav-locked {
 css += nav_css
 changes.append("added v8 navigation redesign CSS")
 
-# Write the enhanced CSS
 with open(css_path, 'w') as f:
     f.write(css)
 
