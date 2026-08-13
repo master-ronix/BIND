@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build v8 JS — navigation redesign, scroll spy, mobile menu, IndexNow, SEO helpers."""
+"""v8 JS — IDEMPOTENT: nav interactions, scroll spy, mobile menu, IndexNow.
+Only inserts if v8 marker doesn't exist, preventing duplication on re-runs."""
 import os, sys
 
 repo = os.environ.get('REPO_PATH', '.')
@@ -14,6 +15,13 @@ with open(js_path, 'r') as f:
 
 original_len = len(js)
 
+# IDEMPOTENCY: Skip entirely if v8 JS already applied
+V8_MARKER = "v8 NAVIGATION REDESIGN"
+if V8_MARKER in js:
+    print(f"v8 JS already applied (marker found). Skipping. Size: {len(js)}")
+    sys.exit(0)
+
+# Match the ACTUAL HTML structure: .nav-toggle with SVG icons, .mobile-menu with data-open
 v8_additions = r"""
 
   /* ================================================================== */
@@ -73,10 +81,6 @@ v8_additions = r"""
       
       if (linkPath === currentPath) {
         link.classList.add('is-active');
-        link.setAttribute('aria-current', 'page');
-        
-        var mobileLink = document.querySelector('.mobile-menu a[href="' + href + '"]');
-        if (mobileLink) mobileLink.setAttribute('aria-current', 'page');
       }
     });
   })();
@@ -147,29 +151,25 @@ v8_additions = r"""
     });
   })();
 
-  /* ---- Magnetic nav links (desktop) ---- */
+  /* ---- Reading progress bar ---- */
   (function() {
-    if (typeof finePointer === 'undefined' || !finePointer || typeof reduceMotion === 'undefined' || reduceMotion) return;
-    var navLinks = document.querySelectorAll('.nav-links a');
-    navLinks.forEach(function(link) {
-      link.addEventListener('mousemove', function(e) {
-        var rect = link.getBoundingClientRect();
-        var x = e.clientX - rect.left - rect.width / 2;
-        var y = e.clientY - rect.top - rect.height / 2;
-        link.style.transform = 'translate(' + (x * 0.15) + 'px, ' + (y * 0.15) + 'px)';
-      });
-      link.addEventListener('mouseleave', function() {
-        link.style.transform = '';
-      });
-    });
+    var progress = document.querySelector('.reading-progress');
+    if (!progress) return;
+    
+    function updateProgress() {
+      var scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+      var scrolled = window.pageYOffset / scrollHeight * 100;
+      progress.style.width = scrolled + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
   })();
 
   /* ---- IndexNow: ping search engines on page load ---- */
   (function() {
     if (window.location.search.indexOf('noindex') > -1) return;
     var currentUrl = window.location.href;
-    var indexNowKey = 'bangwings_indexnow_key';
-    
     var key = 'indexnow_' + currentUrl;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, '1');
@@ -180,67 +180,19 @@ v8_additions = r"""
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           host: window.location.hostname,
-          key: indexNowKey,
+          key: 'bangwings_indexnow_key',
           urlList: [currentUrl]
         })
       }).catch(function() {});
     } catch(e) {}
   })();
 
-  /* ---- Scroll spy indicator (visual nav position) ---- */
-  (function() {
-    if (typeof reduceMotion === 'undefined' || reduceMotion) return;
-    var navLinks = document.querySelectorAll('.nav-links a');
-    if (!navLinks.length) return;
-    
-    var indicator = document.createElement('div');
-    indicator.className = 'scroll-spy-indicator';
-    indicator.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(indicator);
-    
-    function updateIndicator() {
-      var activeLink = document.querySelector('.nav-links a.is-active');
-      if (activeLink) {
-        var rect = activeLink.getBoundingClientRect();
-        indicator.style.top = (rect.top + window.scrollY + rect.height) + 'px';
-        indicator.style.height = '3px';
-      } else {
-        indicator.style.height = '0';
-      }
-    }
-    window.addEventListener('resize', updateIndicator);
-    setTimeout(updateIndicator, 500);
-  })();
-
-  /* ---- Reading progress bar ---- */
-  (function() {
-    var progress = document.querySelector('.reading-progress');
-    if (!progress) return;
-    
-    function updateProgress() {
-      var scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      var scrolled = window.pageYOffset / scrollHeight * 100;
-      progress.style.width = scrolled + '%';
-    }
-    window.addEventListener('scroll', updateProgress, { passive: true });
-    updateProgress();
-  })();
-
 """
 
-# Insert before the last IIFE close
-last_close = js.rfind('})();')
-if last_close == -1:
-    last_close = js.rfind('})()')
-
-if last_close != -1:
-    js = js[:last_close] + v8_additions + '\n' + js[last_close:]
-    print(f"v8 JS enhancements inserted ({len(v8_additions)} chars)")
-else:
-    js += v8_additions
-    print("v8 JS enhancements appended")
+# Append at the end of the file
+js += v8_additions
 
 with open(js_path, 'w') as f:
     f.write(js)
 
-print(f"Final JS: {len(js)} bytes ({len(js) - original_len:+d} from {original_len})")
+print(f"v8 JS done: {len(js)} bytes ({len(js) - original_len:+d} from {original_len})")
