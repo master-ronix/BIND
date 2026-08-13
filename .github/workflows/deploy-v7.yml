@@ -1,4 +1,4 @@
-name: Build v9 and Deploy
+name: Build v9.1 and Deploy
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+           python-version: '3.12'
 
       - name: Install Pillow
         run: pip install Pillow
@@ -29,27 +29,32 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+           node-version: '22'
 
       - name: Apply v9 CSS enhancements
         run: python scripts/build_css_v9.py
         env:
-          REPO_PATH: .
+           REPO_PATH: .
 
       - name: Apply v9 JS enhancements
         run: python scripts/build_js_v9.py
         env:
-          REPO_PATH: .
+           REPO_PATH: .
 
       - name: Apply v9 HTML enhancements
         run: python scripts/build_html_v9.py
         env:
-          REPO_PATH: .
+           REPO_PATH: .
+
+      - name: Apply v9.1 hotfix (breadcrumb dedup + review-wall fix)
+        run: python scripts/hotfix_v91.py
+        env:
+           REPO_PATH: .
 
       - name: Generate brand assets
         run: python scripts/build_brand_assets.py
         env:
-          REPO_PATH: .
+           REPO_PATH: .
         continue-on-error: true
 
       - name: Commit changes
@@ -57,7 +62,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --staged --quiet || git commit -m "v9: nav redesign, data-table fix, SEO enforcement, IndexNow, FAQ schema"
+          git diff --staged --quiet || git commit -m "v9.1: hotfix breadcrumb duplication, review-wall overflow, data-table responsive"
           git pull --rebase origin main || true
           git push || { git pull --rebase origin main && git push; }
 
