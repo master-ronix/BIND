@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""v8 JS — IDEMPOTENT: nav interactions, scroll spy, mobile menu, IndexNow.
-Only inserts if v8 marker doesn't exist, preventing duplication on re-runs."""
+"""v8.1 JS — SELF-HEALING: strips old v8 block and re-applies corrected version.
+Truly idempotent: same output every run, regardless of prior state."""
 import os, sys
 
 repo = os.environ.get('REPO_PATH', '.')
@@ -15,13 +15,26 @@ with open(js_path, 'r') as f:
 
 original_len = len(js)
 
-# IDEMPOTENCY: Skip entirely if v8 JS already applied
-V8_MARKER = "v8 NAVIGATION REDESIGN"
-if V8_MARKER in js:
-    print(f"v8 JS already applied (marker found). Skipping. Size: {len(js)}")
-    sys.exit(0)
+# STEP 1: Strip any existing v8 block (self-healing)
+v8_start_marker = "/* ================================================================== */\n  /* v8 NAVIGATION REDESIGN"
+if v8_start_marker in js:
+    idx = js.index(v8_start_marker)
+    while idx > 0 and js[idx-1] == '\n':
+        idx -= 1
+    js = js[:idx].rstrip() + '\n'
+    print(f"  Stripped old v8 JS block")
+elif "v8 NAVIGATION REDESIGN" in js:
+    idx = js.find("v8 NAVIGATION REDESIGN")
+    while idx > 0 and js[idx-1] != '\n':
+        idx -= 1
+    search_back = js.rfind("/* ===", 0, idx)
+    if search_back > 0:
+        while search_back > 0 and js[search_back-1] == '\n':
+            search_back -= 1
+        js = js[:search_back].rstrip() + '\n'
+        print(f"  Stripped old v8 JS block (fallback)")
 
-# Match the ACTUAL HTML structure: .nav-toggle with SVG icons, .mobile-menu with data-open
+# STEP 2: Append corrected v8 JS additions
 v8_additions = r"""
 
   /* ================================================================== */
@@ -189,10 +202,9 @@ v8_additions = r"""
 
 """
 
-# Append at the end of the file
 js += v8_additions
 
 with open(js_path, 'w') as f:
     f.write(js)
 
-print(f"v8 JS done: {len(js)} bytes ({len(js) - original_len:+d} from {original_len})")
+print(f"v8.1 JS done: {len(js)} bytes ({len(js) - original_len:+d} from {original_len})")
