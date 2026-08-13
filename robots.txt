@@ -1,69 +1,32 @@
-# Bangwing IN — bangwings.xyz
-# Open to every crawler on purpose — classic search, AI answer engines, and
-# LLM training/retrieval bots are all welcome here. We want to be findable
-# everywhere. See /llms.txt for an AI-friendly summary of this site.
+# Bangwing IN — robots.txt (v7)
+# Welcomes search engines and AI/LLM crawlers explicitly.
 
 User-agent: *
 Allow: /
+Disallow: /404.html
+Disallow: /api/
 
-# --- Classic search -----------------------------------------------------
-User-agent: Googlebot
-Allow: /
-User-agent: Googlebot-Image
-Allow: /
-User-agent: Bingbot
-Allow: /
-User-agent: DuckDuckBot
-Allow: /
-User-agent: Applebot
-Allow: /
-User-agent: YandexBot
-Allow: /
-
-# --- AI answer engines & assistants --------------------------------------
+# AI/LLM crawlers — explicitly welcomed
 User-agent: GPTBot
 Allow: /
+
 User-agent: ChatGPT-User
 Allow: /
-User-agent: OAI-SearchBot
-Allow: /
+
 User-agent: ClaudeBot
 Allow: /
-User-agent: Claude-User
-Allow: /
-User-agent: Claude-SearchBot
-Allow: /
+
 User-agent: anthropic-ai
 Allow: /
+
 User-agent: PerplexityBot
 Allow: /
-User-agent: Perplexity-User
-Allow: /
+
 User-agent: Google-Extended
 Allow: /
-User-agent: GoogleOther
-Allow: /
-User-agent: Applebot-Extended
-Allow: /
-User-agent: Meta-ExternalAgent
-Allow: /
-User-agent: Meta-ExternalFetcher
-Allow: /
-User-agent: facebookexternalhit
-Allow: /
-User-agent: Amazonbot
-Allow: /
-User-agent: Bytespider
-Allow: /
-User-agent: CCBot
-Allow: /
-User-agent: cohere-ai
-Allow: /
-User-agent: Diffbot
-Allow: /
-User-agent: MistralAI-User
-Allow: /
-User-agent: YouBot
+
+User-agent: Bingbot
 Allow: /
 
+# Sitemap
 Sitemap: https://bangwings.xyz/sitemap.xml
