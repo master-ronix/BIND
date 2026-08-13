@@ -1,0 +1,19 @@
+# Netlify configuration — Bangwing IN
+# Primary purpose: redirect the default Netlify subdomain to the custom
+# domain so Google consolidates indexing on bangwings.xyz.
+
+# Redirect all traffic from bangwings.netlify.app → bangwings.xyz
+# This is a 301 (permanent) so Google transfers all indexing signals.
+# The Host condition ensures this ONLY fires on the Netlify subdomain —
+# requests to bangwings.xyz fall through to the _redirects file.
+[[redirects]]
+  from = "/*"
+  to = "https://bangwings.xyz/:splat"
+  status = 301
+  force = true
+  [redirects.conditions]
+    Host = "bangwings.netlify.app"
+
+# Build settings
+[build]
+  publish = "."
