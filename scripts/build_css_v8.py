@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""v8 CSS — IDEMPOTENT: navigation redesign, table fixes, missing variables.
-Only appends if the v8 marker doesn't exist, preventing duplication on re-runs."""
+"""v8.1 CSS — SELF-HEALING: strips old v8 block and re-applies corrected version.
+Truly idempotent: same output every run, regardless of prior state."""
 import re, os, sys
 
 repo = os.environ.get('REPO_PATH', '.')
@@ -16,13 +16,14 @@ with open(css_path, 'r') as f:
 original_len = len(css)
 changes = []
 
-# IDEMPOTENCY: Skip entirely if v8 CSS already applied
-V8_MARKER = "v8 NAVIGATION REDESIGN"
-if V8_MARKER in css:
-    print(f"v8 CSS already applied (marker found). Skipping. Size: {len(css)}")
-    sys.exit(0)
+# STEP 1: Strip any existing v8 block (self-healing)
+v8_start_marker = "/* ==========================================================================\n   v8 NAVIGATION REDESIGN"
+if v8_start_marker in css:
+    idx = css.index(v8_start_marker)
+    css = css[:idx].rstrip() + '\n'
+    changes.append("stripped old v8 CSS block")
 
-# FIX 1: Add missing --moon variable if not defined
+# STEP 2: Add missing --moon variable if not defined
 if '--moon' not in css:
     css = re.sub(
         r'(--paper:\s*#[0-9a-fA-F]{6};)',
@@ -31,7 +32,7 @@ if '--moon' not in css:
     )
     changes.append("added --moon color variable")
 
-# FIX 2: Add shorthand variables if missing
+# STEP 3: Add shorthand variables if missing
 shorthand_defs = {
     '--paper-08': 'rgba(250,241,228,.08)',
     '--paper-14': 'rgba(250,241,228,.14)',
@@ -56,15 +57,13 @@ for var_name, var_val in shorthand_defs.items():
         )
         changes.append(f"added {var_name}")
 
-# FIX 3: Navigation redesign CSS — matched to ACTUAL HTML structure
-# The HTML uses SVG icon-open/icon-close inside .nav-toggle
+# STEP 4: Append corrected v8 navigation CSS
 nav_css = r"""
 
 /* ==========================================================================
    v8 NAVIGATION REDESIGN — Reactive, Animated, Interactive, Responsive
    ========================================================================== */
 
-/* ---- Site header: glass morphism on scroll ---- */
 .site-header {
   position: sticky;
   top: 0;
@@ -84,11 +83,8 @@ nav_css = r"""
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   box-shadow: 0 1px 0 rgba(250,241,228,.08), 0 8px 32px rgba(0,0,0,.3);
 }
-.site-header.is-hidden {
-  transform: translateY(-100%);
-}
+.site-header.is-hidden { transform: translateY(-100%); }
 
-/* ---- Nav bar: enhanced layout ---- */
 .nav {
   display: flex;
   align-items: center;
@@ -97,11 +93,8 @@ nav_css = r"""
   height: 60px;
   transition: height .3s cubic-bezier(.16,1,.3,1);
 }
-.site-header.is-scrolled .nav {
-  height: 52px;
-}
+.site-header.is-scrolled .nav { height: 52px; }
 
-/* ---- Brand: animated logo with gradient glow ---- */
 .nav .brand {
   display: inline-flex;
   align-items: center;
@@ -121,16 +114,13 @@ nav_css = r"""
   filter: drop-shadow(0 0 0px transparent);
 }
 @media (hover: hover) {
-  .nav .brand:hover {
-    transform: scale(1.02);
-  }
+  .nav .brand:hover { transform: scale(1.02); }
   .nav .brand:hover .brand-mark {
     transform: rotate(-5deg) scale(1.1);
     filter: drop-shadow(0 0 8px rgba(255,124,46,.4));
   }
 }
 
-/* ---- Nav links: desktop pill-style ---- */
 .nav-links {
   display: flex;
   align-items: center;
@@ -170,19 +160,14 @@ nav_css = r"""
     background: rgba(250,241,228,.08);
     transform: translateY(-1px);
   }
-  .nav-links a:hover::after {
-    width: 60%;
-  }
+  .nav-links a:hover::after { width: 60%; }
 }
 .nav-links a.is-active {
   color: #FAF1E4;
   background: rgba(250,241,228,.15);
 }
-.nav-links a.is-active::after {
-  width: 60%;
-}
+.nav-links a.is-active::after { width: 60%; }
 
-/* ---- Nav actions ---- */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -196,10 +181,7 @@ nav_css = r"""
   height: 38px;
   border-radius: 12px;
   color: rgba(250,241,228,.7);
-  transition: 
-    color .25s ease,
-    background-color .25s ease,
-    transform .25s cubic-bezier(.34,1.56,.64,1);
+  transition: color .25s ease, background-color .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
 }
 @media (hover: hover) {
   .nav-icon-btn:hover {
@@ -209,7 +191,6 @@ nav_css = r"""
   }
 }
 
-/* ---- Hamburger toggle: SVG icon swap ---- */
 .nav-toggle {
   display: none;
   position: relative;
@@ -247,7 +228,6 @@ nav_css = r"""
   transform: translate(-50%, -50%) scale(1) rotate(0deg);
 }
 
-/* ---- Mobile menu: full-screen overlay with staggered links ---- */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -268,9 +248,7 @@ nav_css = r"""
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: 
-    opacity .35s cubic-bezier(.16,1,.3,1),
-    visibility .35s;
+  transition: opacity .35s cubic-bezier(.16,1,.3,1), visibility .35s;
 }
 .mobile-menu[data-open="true"] {
   opacity: 1;
@@ -332,16 +310,13 @@ nav_css = r"""
   .nav-links { display: none; }
   .nav-toggle { display: block; }
   .nav-actions .nav-cta,
-  .nav-actions .nav-icon-btn:not(.nav-store-btn) {
-    display: none;
-  }
+  .nav-actions .nav-icon-btn:not(.nav-store-btn) { display: none; }
 }
 @media (min-width: 881px) {
   .mobile-menu { display: none !important; }
   .mobile-menu-backdrop { display: none !important; }
 }
 
-/* ---- Data table ---- */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -390,7 +365,6 @@ nav_css = r"""
   .data-table { display: block; overflow-x: auto; white-space: nowrap; }
 }
 
-/* ---- Review wall fix ---- */
 .review-wall {
   position: relative;
   overflow: hidden;
@@ -398,7 +372,6 @@ nav_css = r"""
   padding: 1rem 0;
 }
 
-/* ---- FAQ micro-formatting ---- */
 .faq-item {
   margin-bottom: 1.5rem;
   padding: 1.2rem 1.5rem;
@@ -413,7 +386,6 @@ nav_css = r"""
 }
 .faq-item .faq-answer { font-weight: 600; color: #FAF1E4; }
 
-/* ---- Breadcrumb styling ---- */
 .breadcrumbs {
   display: flex;
   flex-wrap: wrap;
@@ -447,18 +419,13 @@ nav_css = r"""
 .breadcrumbs a:hover { color: #FAF1E4; }
 .breadcrumbs li:last-child { color: #FAF1E4; }
 
-/* ---- Body scroll lock ---- */
 body.nav-locked {
   overflow: hidden;
   position: fixed;
   width: 100%;
 }
 
-/* ---- Nav CTA shimmer ---- */
-.nav-cta {
-  position: relative;
-  overflow: hidden;
-}
+.nav-cta { position: relative; overflow: hidden; }
 .nav-cta::before {
   content: "";
   position: absolute;
@@ -471,7 +438,6 @@ body.nav-locked {
   .nav-cta:hover::before { transform: translateX(100%); }
 }
 
-/* ---- Skip link ---- */
 .skip-link {
   position: absolute;
   top: -100px;
@@ -487,7 +453,6 @@ body.nav-locked {
 }
 .skip-link:focus { top: 0; }
 
-/* ---- Reading progress bar ---- */
 .reading-progress {
   position: fixed;
   top: 0;
@@ -499,16 +464,13 @@ body.nav-locked {
   transition: width .1s linear;
 }
 
-/* ---- Content visibility ---- */
 [data-cv="auto"] {
   content-visibility: auto;
   contain-intrinsic-size: auto 500px;
 }
 
-/* ---- View transition ---- */
 @view-transition { navigation: auto; }
 
-/* ---- Focus visibility ---- */
 .nav-links a:focus-visible,
 .nav-icon-btn:focus-visible,
 .nav-toggle:focus-visible,
@@ -517,14 +479,13 @@ body.nav-locked {
   outline-offset: 4px;
   border-radius: 10px;
 }
-
 """
 
 css += nav_css
-changes.append("added v8 navigation redesign CSS")
+changes.append("applied corrected v8 navigation CSS")
 
 with open(css_path, 'w') as f:
     f.write(css)
 
-print(f"v8 CSS done: {len(css)} bytes ({len(css) - original_len:+d} from {original_len})")
+print(f"v8.1 CSS done: {len(css)} bytes ({len(css) - original_len:+d} from {original_len})")
 print(f"Changes: {', '.join(changes)}")
