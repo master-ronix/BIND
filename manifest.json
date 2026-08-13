@@ -1,7 +1,7 @@
 {
-  "name": "Bangwing IN \u2014 Indian Discord Community",
+  "name": "Bangwing IN — Indian Discord Community",
   "short_name": "Bangwing IN",
-  "description": "A social Discord community from India for art, photography and writing. No giveaways, no dating, no scams \u2014 just people.",
+  "description": "A social Discord community from India for art, photography and writing. No giveaways, no dating, no scams — just people.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1B1417",
@@ -15,7 +15,7 @@
     {
       "src": "/assets/images/brand/icon-180.png",
       "sizes": "180x180",
-      "type": "image/pon"
+      "type": "image/png"
     },
     {
       "src": "/assets/images/brand/icon-192.png",
