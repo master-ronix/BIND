@@ -1,4 +1,4 @@
-# Bangwing IN — robots.txt (v7)
+# Bangwing IN — robots.txt (v8)
 # Welcomes search engines and AI/LLM crawlers explicitly.
 
 User-agent: *
