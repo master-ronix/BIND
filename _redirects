@@ -1,9 +1,5 @@
 # Bangwing IN — redirect rules (Netlify & Cloudflare Pages)
-# v8: redirect Netlify domain to canonical domain + extensionless URLs
-
-# Domain-level redirect: bangwings.netlify.app -> bangwings.xyz
-# This consolidates link equity and fixes Google's canonical preference
-https://bangwings.netlify.app/* https://bangwings.xyz/:splat 301!
+# v8.2: extensionless URLs only (absolute URL redirects not supported by Cloudflare Workers)
 
 # Extensionless URL redirects (canonical form)
 /our-story.html      /our-story         301
