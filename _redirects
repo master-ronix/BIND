@@ -1,1 +1,13 @@
-IyBCYW5nd2luZyBJTiDigJQgcmVkaXJlY3QgcnVsZXMgKE5ldGxpZnkgJiBDbG91ZGZsYXJlIFBhZ2VzKQojIHY2OiByZWRpcmVjdCBhbnkgaW5kZXhlZCAuaHRtbCBVUkxzIHRvIHRoZWlyIGV4dGVuc2lvbmxlc3MgY2Fub25pY2FsIGZvcm0uCiMgVGhpcyBpcyBhIDMwMSAocGVybWFuZW50KSBzbyBsaW5rIGVxdWl0eSB0cmFuc2ZlcnMgY2xlYW5seS4gT25jZSBzZWFyY2gKIyBlbmdpbmVzIHJlLWNyYXdsIGFuZCBwaWNrIHVwIHRoZSBuZXcgc2l0ZW1hcCwgdGhlc2UgcnVsZXMgYmVjb21lIG5vLW9wcy4KCi9vdXItc3RvcnkuaHRtbCAgICAvb3VyLXN0b3J5ICAgICAgIDMwMQovY29tbXVuaXR5Lmh0bWwgICAgL2NvbW11bml0eSAgICAgICAzMDEKL2V2ZW50cy5odG1sICAgICAgIC9ldmVudHMgICAgICAgICAgIDMwMQovYWNoaWV2ZW1lbnRzLmh0bWwgL2FjaGlldmVtZW50cyAgICAzMDEKL3NhZmV0eS5odG1sICAgICAgIC9zYWZldHkgICAgICAgICAgIDMwMQovc3RvcmUuaHRtbCAgICAgICAgL3N0b3JlICAgICAgICAgICAgMzAxCi9jb250YWN0Lmh0bWwgICAgICAvY29udGFjdCAgICAgICAgICAzMDEKL2pvaW4uaHRtbCAgICAgICAgL2pvaW4gICAgICAgICAgICAIDMwMQovaW5kZXguaHRtbCAgICAgICAgLyAgICAgICAgICAgICAgICAgMzAxCgojIHd3dyDihpIgbm9uLXd3dyAodW5jb21tZW50IGlmIHlvdSByZWdpc3RlciB3d3cuYmFuZ3dpbmdzLnh5eikKIyBodHRwczovL3d3dy5iYW5nd2luZ3MueHl6LyogIGh0dHBzOi8vYmFuZ3dpbmdzLnh5ei86c3BsYXQgIDMwMQo=
+# Bangwing IN — redirect rules (Netlify & Cloudflare Pages)
+# v7: redirect any indexed .html URLs to their extensionless canonical form.
+# This is a 301 (permanent) so link equity transfers cleanly.
+
+/our-story.html     /our-story        301
+/community.html     /community        301
+/events.html       /events           301
+/achievements.html /achievements     301
+/safety.html       /safety           301
+/store.html        /store            301
+/contact.html      /contact          301
+/join.html         /join             301
+/index.html        /                 301
