@@ -3,9 +3,9 @@
 # This is a 301 (permanent) so link equity transfers cleanly. Once search
 # engines re-crawl and pick up the new sitemap, these rules become no-ops.
 
-/our-story.html    /our-story      301!
+/our-story.html    /our-story       301!
 /community.html    /community       301!
-/events.html       /events          301!
+/events.html       /events           301!
 /achievements.html /achievements    301!
 /safety.html       /safety           301!
 /store.html        /store            301!
@@ -13,5 +13,5 @@
 /join.html         /join             301!
 /index.html        /                 301!
 
-# www → apex (uncomment if you register www.bangwings.xyz)
+# www → non-www (uncomment if you register www.bangwings.xyz)
 # https://www.bangwings.xyz/*  https://bangwings.xyz/:splat  301!

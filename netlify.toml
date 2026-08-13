@@ -1,0 +1,16 @@
+# Netlify configuration — Bangwing IN
+# Only affects the bangwings.netlify.app deployment.
+# Cloudflare Worker (serving bangwings.xyz) ignores this file entirely.
+
+# Redirect all traffic from bangwings.netlify.app → bangwings.xyz (301 permanent)
+# The Host condition ensures this ONLY fires on the Netlify subdomain.
+[[redirects]]
+  from = "/*"
+  to = "https://bangwings.xyz/:splat"
+  status = 301
+  force = true
+  [redirects.conditions]
+    Host = "bangwings.netlify.app"
+
+[build]
+  publish = "."
