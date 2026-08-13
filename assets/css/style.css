@@ -1871,6 +1871,12 @@ body.nav-locked {
   outline-offset: 4px;
   border-radius: 10px;
 }
+}
+.review-wall .data-table { margin-bottom: 2rem; }
+}
+
+
+
 /* ====================================================================== */
 
 /* Glass morphism, animated hamburger->X, scroll-spy indicator,          */
@@ -1893,10 +1899,6 @@ body.nav-locked {
               border-color 0.3s ease;
 }
 }
-.review-wall .data-table { margin-bottom: 2rem; }
-}
-
-
 
 /* ====================================================================== */
 
