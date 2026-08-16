@@ -1,14 +1,57 @@
 {
-  "name": "wispy-rice-6aa7",
+  // Bangwing IN — Cloudflare Workers deployment config.
+  // This deploys the entire `site/` folder as static assets served directly
+  // by a Worker (Cloudflare's modern replacement/companion for Pages), with
+  // one small edge route (/api/discord-stats) for the live member-count
+  // proxy — see worker.js. Deploy with: wrangler deploy
+  //
+  // If you'd rather use Cloudflare Pages instead, just drag-and-drop the
+  // `site/` folder into a new Pages project — this file isn't needed for
+  // that path. Both deployment methods are documented in site/README.md.
+  // IMPORTANT if you do use Pages instead of this Worker: classic Pages
+  // has no setting to disable its own .html-stripping redirect, so every
+  // *.html URL (which is what our sitemap/canonical tags/internal links all
+  // use) will 307/308 redirect there. That is almost certainly the "Page
+  // with redirect" issue Google Search Console flagged. This Worker config
+  // is what avoids it — see html_handling below.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bangwings-website",
   "main": "worker.js",
-  "compatibility_date": "2024-09-23",
-  "account_id": "5c4d31eb0bfbca08d85eba928fa529f1",
+  "compatibility_date": "2026-07-01",
+
   "assets": {
-    "directory": "./",
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+    "directory": "./site",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // "none" = serve /page.html exactly as requested, 200, no redirect.
+    // The previous "auto-trailing-slash" setting 307-redirected every
+    // /page.html request to /page — but our sitemap, canonical tags, and
+    // every internal link all point to the *.html URL, so Google was
+    // crawling a URL that immediately redirected out from under it. That's
+    // the "Page with redirect" issue in Search Console. "none" fixes it,
+    // at the cost of needing worker.js to explicitly map "/" -> index.html
+    // (see the fetch handler), since "none" turns off automatic directory
+    // index resolution too.
+    "html_handling": "none",
+    // Run the Worker for every request (not just /api/*), so worker.js can
+    // (a) map "/" to index.html now that html_handling is "none", and
+    // (b) apply the security headers below consistently everywhere.
+    "run_worker_first": true
   },
+
   "observability": {
-    "enabled": true
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
   }
 }
