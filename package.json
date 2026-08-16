@@ -1,0 +1,16 @@
+{
+  "name": "bangwings-website",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Bangwing IN — static site + Cloudflare Worker (edge Discord stats proxy, security headers).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "postdeploy": "node scripts/submit-indexnow.js",
+    "submit-indexnow": "node scripts/submit-indexnow.js",
+    "check-seo": "node scripts/check-seo.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.4.0"
+  }
+}
