@@ -1,0 +1,49 @@
+name: Deploy Files
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to download assets from'
+        required: true
+        default: 'v7-files'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bangwing-v7
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Download release assets
+        run: |
+          mkdir -p /tmp/assets
+          gh release download "${{ inputs.release_tag }}" \
+            --dir /tmp/assets \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Place files in correct locations
+        run: |
+          cp /tmp/assets/achievements.html site/achievements.html
+          mkdir -p site/assets/css
+          cp /tmp/assets/style.css site/assets/css/style.css
+          mkdir -p site/assets/images
+          cp /tmp/assets/og-image.jpg site/assets/images/og-image.jpg
+
+      - name: Remove test file
+        run: |
+          rm -f test-utf8.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add achievements.html, style.css, og-image.jpg from release assets; remove test-utf8.txt"
+          git push
