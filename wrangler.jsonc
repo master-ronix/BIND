@@ -15,7 +15,7 @@
   // with redirect" issue Google Search Console flagged. This Worker config
   // is what avoids it — see html_handling below.
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "bangwings-website",
+  "name": "wispy-rice-6aa7",
   "main": "worker.js",
   "compatibility_date": "2026-07-01",
 
