@@ -1,8 +1,7 @@
 /**
  * Bangwing IN — Cloudflare Worker
- * Handles /api/discord-stats; all other requests are served by the
- * ASSETS binding directly (no run_worker_first), so Cloudflare's
- * built-in asset handler sets correct Content-Type headers.
+ * html_handling is "none" so we control Content-Type and caching
+ * for every response, including .html files.
  */
 
 const DISCORD_INVITE_CODE = "w3Pe95knF6";
@@ -22,6 +21,8 @@ const SECURITY_HEADERS = {
     "frame-src https://www.youtube-nocookie.com; script-src 'self'; base-uri 'self'; form-action 'self'",
 };
 
+const NOINDEX_PATHS = new Set(["/sitemap.xml", "/manifest.json"]);
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -30,12 +31,14 @@ export default {
       return handleDiscordStats(request, ctx);
     }
 
-    // For all other requests, fall through to the ASSETS handler.
-    // This only runs when the ASSETS handler doesn't match (i.e. for
-    // non-static-asset routes). With run_worker_first disabled, static
-    // assets including HTML are served directly by Cloudflare's asset
-    // handler with correct Content-Type headers.
-    return env.ASSETS.fetch(request);
+    // html_handling is "none" so we must map "/" to index.html ourselves.
+    const assetRequest =
+      url.pathname === "/"
+        ? new Request(new URL("/index.html", url), request)
+        : request;
+
+    const assetResponse = await env.ASSETS.fetch(assetRequest);
+    return withHeaders(assetResponse, url.pathname);
   },
 };
 
@@ -78,4 +81,46 @@ async function handleDiscordStats(request, ctx) {
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
+}
+
+function withHeaders(response, pathname) {
+  const headers = new Headers(response.headers);
+
+  // Security headers on every response.
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    headers.set(key, value);
+  }
+
+  // html_handling is "none" — ASSETS serves .html files without setting
+  // text/html. We MUST set it explicitly here, overriding whatever
+  // Content-Type ASSETS returned (text/plain, application/octet-stream,
+  // or nothing at all).
+  const isHTML =
+    pathname === "/" ||
+    pathname.endsWith(".html") ||
+    (!pathname.includes(".") && pathname !== "/api/discord-stats");
+
+  if (isHTML) {
+    headers.set("Content-Type", "text/html; charset=utf-8");
+  }
+
+  // Cache-busting for HTML so stale CDN entries from previous deploys
+  // don't persist. Versioned assets under /assets/ get long-lived caching.
+  const isVersionedAsset = pathname.startsWith("/assets/");
+
+  if (isVersionedAsset) {
+    headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+  } else {
+    // no-cache forces revalidation on every request so new deploys show up
+    // immediately, and CDN-Cache-Control: no-store prevents the edge from
+    // caching at all until we know the Content-Type is correct everywhere.
+    headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+    headers.set("CDN-Cache-Control", "no-store");
+  }
+
+  if (NOINDEX_PATHS.has(pathname)) {
+    headers.set("X-Robots-Tag", "noindex");
+  }
+
+  return new Response(response.body, { status: response.status, headers });
 }
