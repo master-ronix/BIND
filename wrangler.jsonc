@@ -16,12 +16,11 @@
     {
       "pattern": "bangwings.xyz",
       "custom_domain": true
-    },
-    {
-      "pattern": "www.bangwings.xyz",
-      "custom_domain": true
     }
   ],
+
+  "workers_dev": true,
+  "preview_urls": true,
 
   "observability": {
     "enabled": false
