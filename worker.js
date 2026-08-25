@@ -32,12 +32,7 @@ export default {
       return handleDiscordStats(request, ctx);
     }
 
-    const assetRequest =
-      url.pathname === "/"
-        ? new Request(new URL("/index.html", url), request)
-        : request;
-
-    const assetResponse = await env.ASSETS.fetch(assetRequest);
+    const assetResponse = await env.ASSETS.fetch(request);
     return withHeaders(assetResponse, url.pathname);
   },
 };
@@ -90,16 +85,10 @@ function withHeaders(response, pathname) {
     headers.set(key, value);
   }
 
-  // html_handling is "none", which means Cloudflare serves .html files
-  // without setting text/html Content-Type. We must force it here.
   const isHTML =
     pathname === "/" ||
     pathname.endsWith(".html") ||
     (!pathname.includes(".") && pathname !== "/api/discord-stats");
-
-  if (isHTML) {
-    headers.set("Content-Type", "text/html; charset=utf-8");
-  }
 
   const isVersionedAsset = pathname.startsWith("/assets/");
 
