@@ -17,7 +17,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "wispy-rice-6aa7",
   "main": "worker.js",
-  "compatibility_date": "2026-07-01",
+  "compatibility_date": "2024-09-23",
 
   "assets": {
     "directory": "./site",
@@ -40,18 +40,6 @@
   },
 
   "observability": {
-    "enabled": false,
-    "head_sampling_rate": 1,
-    "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true
-    },
-    "traces": {
-      "enabled": false,
-      "persist": true,
-      "head_sampling_rate": 1
-    }
+    "enabled": false
   }
 }
