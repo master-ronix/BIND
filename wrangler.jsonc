@@ -12,6 +12,17 @@
     "run_worker_first": true
   },
 
+  "routes": [
+    {
+      "pattern": "bangwings.xyz",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.bangwings.xyz",
+      "custom_domain": true
+    }
+  ],
+
   "observability": {
     "enabled": false
   }

@@ -29,12 +29,31 @@ export default {
       return handleDiscordStats(request, ctx);
     }
 
+    // Handle clean URLs: /events -> /events.html, /community -> /community.html
+    // Google canonicalized these from the old Netlify pretty-URL setup
+    let assetPath = url.pathname;
+    if (
+      assetPath !== "/" &&
+      !assetPath.includes(".") &&
+      !assetPath.startsWith("/api/") &&
+      !assetPath.startsWith("/assets/")
+    ) {
+      assetPath = assetPath + ".html";
+    }
+
     const assetRequest =
-      url.pathname === "/"
+      assetPath === "/"
         ? new Request(new URL("/index.html", url), request)
-        : request;
+        : new Request(new URL(assetPath, url), request);
 
     const assetResponse = await env.ASSETS.fetch(assetRequest);
+
+    // If the .html version wasn't found, try the original path
+    if (assetResponse.status === 404 && assetPath !== url.pathname) {
+      const fallbackResponse = await env.ASSETS.fetch(request);
+      return withHeaders(fallbackResponse, url.pathname);
+    }
+
     return withHeaders(assetResponse, url.pathname);
   },
 };
