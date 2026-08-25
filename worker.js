@@ -1,7 +1,6 @@
 /**
  * Bangwing IN — Cloudflare Worker
- * html_handling is "none" so we control Content-Type and caching
- * for every response, including .html files.
+ * Added /debug endpoint to diagnose Content-Type issues
  */
 
 const DISCORD_INVITE_CODE = "w3Pe95knF6";
@@ -27,11 +26,38 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    // DEBUG ENDPOINT - shows what ASSETS returns for any path
+    if (url.pathname === "/debug") {
+      const testPath = url.searchParams.get("path") || "/our-story.html";
+      const testUrl = new URL(testPath, url);
+      const assetReq = new Request(testUrl, {
+        method: "GET",
+        headers: { "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+      });
+      
+      const assetResp = await env.ASSETS.fetch(assetReq);
+      
+      const debugInfo = {
+        requestedPath: testPath,
+        assetStatus: assetResp.status,
+        assetStatusText: assetResp.statusText,
+        assetHeaders: Object.fromEntries(assetResp.headers.entries()),
+        workerWouldSet: {
+          "Content-Type": testPath.endsWith(".html") || testPath === "/" ? "text/html; charset=utf-8" : "(not changed)",
+        },
+        url: url.href,
+      };
+      
+      return new Response(JSON.stringify(debugInfo, null, 2), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     if (url.pathname === "/api/discord-stats") {
       return handleDiscordStats(request, ctx);
     }
 
-    // html_handling is "none" so we must map "/" to index.html ourselves.
     const assetRequest =
       url.pathname === "/"
         ? new Request(new URL("/index.html", url), request)
@@ -86,15 +112,10 @@ async function handleDiscordStats(request, ctx) {
 function withHeaders(response, pathname) {
   const headers = new Headers(response.headers);
 
-  // Security headers on every response.
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
   }
 
-  // html_handling is "none" — ASSETS serves .html files without setting
-  // text/html. We MUST set it explicitly here, overriding whatever
-  // Content-Type ASSETS returned (text/plain, application/octet-stream,
-  // or nothing at all).
   const isHTML =
     pathname === "/" ||
     pathname.endsWith(".html") ||
@@ -104,16 +125,11 @@ function withHeaders(response, pathname) {
     headers.set("Content-Type", "text/html; charset=utf-8");
   }
 
-  // Cache-busting for HTML so stale CDN entries from previous deploys
-  // don't persist. Versioned assets under /assets/ get long-lived caching.
   const isVersionedAsset = pathname.startsWith("/assets/");
 
   if (isVersionedAsset) {
     headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
   } else {
-    // no-cache forces revalidation on every request so new deploys show up
-    // immediately, and CDN-Cache-Control: no-store prevents the edge from
-    // caching at all until we know the Content-Type is correct everywhere.
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set("CDN-Cache-Control", "no-store");
   }
