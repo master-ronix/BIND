@@ -28,23 +28,3 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Purge Cloudflare cache
-        run: |
-          # List zones to find the zone ID
-          ZONES=$(curl -sS "https://api.cloudflare.com/client/v4/zones?per_page=50" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json")
-          echo "Zones response: $ZONES"
-          # Try to extract zone IDs and purge each
-          echo "$ZONES" | jq -r '.result[].id' 2>/dev/null | while read -r zone_id; do
-            echo "Purging cache for zone: $zone_id"
-            curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$zone_id/purge_cache" \
-              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              --data '{"purge_everything":true}'
-            echo ""
-          done
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

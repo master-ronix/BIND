@@ -1,6 +1,5 @@
 /**
  * Bangwing IN — Cloudflare Worker
- * Added /debug endpoint to diagnose Content-Type issues
  */
 
 const DISCORD_INVITE_CODE = "w3Pe95knF6";
@@ -25,34 +24,6 @@ const NOINDEX_PATHS = new Set(["/sitemap.xml", "/manifest.json"]);
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-
-    // DEBUG ENDPOINT - shows what ASSETS returns for any path
-    if (url.pathname === "/debug") {
-      const testPath = url.searchParams.get("path") || "/our-story.html";
-      const testUrl = new URL(testPath, url);
-      const assetReq = new Request(testUrl, {
-        method: "GET",
-        headers: { "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
-      });
-      
-      const assetResp = await env.ASSETS.fetch(assetReq);
-      
-      const debugInfo = {
-        requestedPath: testPath,
-        assetStatus: assetResp.status,
-        assetStatusText: assetResp.statusText,
-        assetHeaders: Object.fromEntries(assetResp.headers.entries()),
-        workerWouldSet: {
-          "Content-Type": testPath.endsWith(".html") || testPath === "/" ? "text/html; charset=utf-8" : "(not changed)",
-        },
-        url: url.href,
-      };
-      
-      return new Response(JSON.stringify(debugInfo, null, 2), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
 
     if (url.pathname === "/api/discord-stats") {
       return handleDiscordStats(request, ctx);
