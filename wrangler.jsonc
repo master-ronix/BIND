@@ -1,5 +1,4 @@
 {
-  // Bangwing IN — Cloudflare Workers deployment config.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "wispy-rice-6aa7",
   "main": "worker.js",
@@ -9,11 +8,7 @@
     "directory": "./site",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    // Use auto-trailing-slash (the default) so Cloudflare properly sets
-    // Content-Type: text/html for .html files. The previous "none" setting
-    // caused .html files to be served as text/plain.
-    "html_handling": "auto-trailing-slash",
-    "run_worker_first": true
+    "html_handling": "auto-trailing-slash"
   },
 
   "observability": {

@@ -1,8 +1,8 @@
 /**
  * Bangwing IN — Cloudflare Worker
- * Two jobs:
- *   1. /api/discord-stats  → edge-cached proxy to Discord's public invite API
- *   2. everything else     → served from the `site/` folder via ASSETS binding
+ * Handles /api/discord-stats; all other requests are served by the
+ * ASSETS binding directly (no run_worker_first), so Cloudflare's
+ * built-in asset handler sets correct Content-Type headers.
  */
 
 const DISCORD_INVITE_CODE = "w3Pe95knF6";
@@ -22,8 +22,6 @@ const SECURITY_HEADERS = {
     "frame-src https://www.youtube-nocookie.com; script-src 'self'; base-uri 'self'; form-action 'self'",
 };
 
-const NOINDEX_PATHS = new Set(["/sitemap.xml", "/manifest.json"]);
-
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -32,8 +30,12 @@ export default {
       return handleDiscordStats(request, ctx);
     }
 
-    const assetResponse = await env.ASSETS.fetch(request);
-    return withHeaders(assetResponse, url.pathname);
+    // For all other requests, fall through to the ASSETS handler.
+    // This only runs when the ASSETS handler doesn't match (i.e. for
+    // non-static-asset routes). With run_worker_first disabled, static
+    // assets including HTML are served directly by Cloudflare's asset
+    // handler with correct Content-Type headers.
+    return env.ASSETS.fetch(request);
   },
 };
 
@@ -76,31 +78,4 @@ async function handleDiscordStats(request, ctx) {
 
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
-}
-
-function withHeaders(response, pathname) {
-  const headers = new Headers(response.headers);
-
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-    headers.set(key, value);
-  }
-
-  const isHTML =
-    pathname === "/" ||
-    pathname.endsWith(".html") ||
-    (!pathname.includes(".") && pathname !== "/api/discord-stats");
-
-  const isVersionedAsset = pathname.startsWith("/assets/");
-
-  if (isVersionedAsset) {
-    headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-  } else if (isHTML) {
-    headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-  }
-
-  if (NOINDEX_PATHS.has(pathname)) {
-    headers.set("X-Robots-Tag", "noindex");
-  }
-
-  return new Response(response.body, { status: response.status, headers });
 }
