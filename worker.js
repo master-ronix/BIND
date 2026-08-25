@@ -90,16 +90,14 @@ function withHeaders(response, pathname) {
     headers.set(key, value);
   }
 
-  // html_handling is "none", which means Cloudflare won't set text/html
-  // automatically for .html files — we must do it ourselves.
+  // html_handling is "none", which means Cloudflare serves .html files
+  // without setting text/html Content-Type. We must force it here.
   const isHTML =
     pathname === "/" ||
     pathname.endsWith(".html") ||
     (!pathname.includes(".") && pathname !== "/api/discord-stats");
 
-  if (isHTML && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "text/html; charset=utf-8");
-  } else if (isHTML && headers.get("Content-Type")?.includes("text/plain")) {
+  if (isHTML) {
     headers.set("Content-Type", "text/html; charset=utf-8");
   }
 
