@@ -19,8 +19,6 @@ const SECURITY_HEADERS = {
     "frame-src https://www.youtube-nocookie.com; script-src 'self'; base-uri 'self'; form-action 'self'",
 };
 
-const NOINDEX_PATHS = new Set(["/sitemap.xml", "/manifest.json"]);
-
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -106,27 +104,36 @@ function withHeaders(response, pathname) {
     headers.set(key, value);
   }
 
-  const isHTML =
-    pathname === "/" ||
-    pathname.endsWith(".html") ||
-    (!pathname.includes(".") && pathname !== "/api/discord-stats");
-
-  if (isHTML) {
+  // Set correct Content-Type based on file extension
+  if (pathname === "/" || pathname.endsWith(".html")) {
+    headers.set("Content-Type", "text/html; charset=utf-8");
+  } else if (pathname.endsWith(".xml")) {
+    headers.set("Content-Type", "application/xml; charset=utf-8");
+  } else if (pathname.endsWith(".json")) {
+    headers.set("Content-Type", "application/json; charset=utf-8");
+  } else if (pathname.endsWith(".txt")) {
+    headers.set("Content-Type", "text/plain; charset=utf-8");
+  } else if (!pathname.includes(".") && pathname !== "/api/discord-stats") {
+    // Clean URL serving .html content
     headers.set("Content-Type", "text/html; charset=utf-8");
   }
 
   const isVersionedAsset = pathname.startsWith("/assets/");
+  const isSitemap = pathname === "/sitemap.xml";
 
   if (isVersionedAsset) {
     headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+  } else if (isSitemap) {
+    // Allow sitemap to be cached at edge for 1 hour
+    headers.set("Cache-Control", "public, max-age=3600");
+    headers.set("CDN-Cache-Control", "public, max-age=3600");
   } else {
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set("CDN-Cache-Control", "no-store");
   }
 
-  if (NOINDEX_PATHS.has(pathname)) {
-    headers.set("X-Robots-Tag", "noindex");
-  }
+  // Remove noindex from sitemap and manifest — let Google process them freely
+  // (Previously: X-Robots-Tag: noindex was set, which may have delayed processing)
 
   return new Response(response.body, { status: response.status, headers });
 }
