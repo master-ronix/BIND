@@ -16,6 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Update HTML files to use clean URLs
+        run: python3 scripts/update_clean_urls.py
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
