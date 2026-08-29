@@ -1,5 +1,0 @@
-# Netlify & Cloudflare Pages both read this file automatically.
-# Uncomment below if you also register www.bangwings.xyz, to send it to the apex domain:
-# https://www.bangwings.xyz/*  https://bangwings.xyz/:splat  301!
-
-# 404s are handled automatically by /404.html — no rule needed here.
