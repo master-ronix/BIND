@@ -168,6 +168,9 @@ function withHeaders(response, pathname) {
     headers.set("Content-Type", "text/plain; charset=utf-8");
   } else if (pathname.endsWith(".svg")) {
     headers.set("Content-Type", "image/svg+xml");
+  } else if (pathname.startsWith("/.well-known/")) {
+    // Well-known files (e.g. Discord domain verification) → text/plain
+    headers.set("Content-Type", "text/plain; charset=utf-8");
   } else if (!pathname.includes(".") && pathname !== "/api/discord-stats") {
     // Clean URL serving .html content
     headers.set("Content-Type", "text/html; charset=utf-8");
@@ -177,6 +180,7 @@ function withHeaders(response, pathname) {
   const isVersionedAsset = pathname.startsWith("/assets/");
   const isSitemap = pathname === "/sitemap.xml";
   const isRobots = pathname === "/robots.txt";
+  const isWellKnown = pathname.startsWith("/.well-known/");
 
   if (isVersionedAsset) {
     headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
@@ -187,6 +191,10 @@ function withHeaders(response, pathname) {
     headers.set("CDN-Cache-Control", "public, max-age=86400");
   } else if (isRobots) {
     // Robots.txt: cache at edge for 1 hour
+    headers.set("Cache-Control", "public, max-age=3600");
+    headers.set("CDN-Cache-Control", "public, max-age=3600");
+  } else if (isWellKnown) {
+    // .well-known verification files: short edge cache
     headers.set("Cache-Control", "public, max-age=3600");
     headers.set("CDN-Cache-Control", "public, max-age=3600");
   } else {
