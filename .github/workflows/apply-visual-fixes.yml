@@ -1,12 +1,8 @@
 name: Apply Visual Fixes from Zip
 
 on:
-  workflow_dispatch:
-    inputs:
-      zip_url:
-        description: 'URL to the BIND-codebase-fixed.zip file'
-        required: true
-        type: string
+  repository_dispatch:
+    types: [apply-visual-fixes]
 
 permissions:
   contents: write
@@ -19,17 +15,16 @@ jobs:
 
       - name: Download and extract zip
         run: |
-          curl -L -o /tmp/codebase.zip "${{ inputs.zip_url }}"
+          curl -L -o /tmp/codebase.zip "https://github.com/master-ronix/BIND/releases/download/visual-fixes-v1/BIND-codebase-fixed.zip"
           mkdir -p /tmp/extracted
           unzip -o /tmp/codebase.zip -d /tmp/extracted
-          # Find the extracted directory (usually BIND-<commit-sha>/)
           EXTRACTED_DIR=$(find /tmp/extracted -maxdepth 1 -type d | tail -1)
           echo "Extracted to: $EXTRACTED_DIR"
+          ls -la $EXTRACTED_DIR/site/
 
       - name: Copy changed files to site/
         run: |
           EXTRACTED_DIR=$(find /tmp/extracted -maxdepth 1 -type d | tail -1)
-          # Copy all site/ files from the zip
           cp -f $EXTRACTED_DIR/site/index.html site/index.html
           cp -f $EXTRACTED_DIR/site/events.html site/events.html
           cp -f $EXTRACTED_DIR/site/our-story.html site/our-story.html
@@ -39,10 +34,9 @@ jobs:
           cp -f $EXTRACTED_DIR/site/join.html site/join.html
           cp -f $EXTRACTED_DIR/site/store.html site/store.html
           cp -f $EXTRACTED_DIR/site/contact.html site/contact.html
-          # Copy CSS
           mkdir -p site/assets/css
           cp -f $EXTRACTED_DIR/site/assets/css/style.css site/assets/css/style.css
-          echo "All files copied"
+          echo "All 10 files copied"
 
       - name: Set up Python
         uses: actions/setup-python@v5
