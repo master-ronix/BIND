@@ -1,0 +1,81 @@
+name: Apply Visual Fixes from Zip
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_url:
+        description: 'URL to the BIND-codebase-fixed.zip file'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and extract zip
+        run: |
+          curl -L -o /tmp/codebase.zip "${{ inputs.zip_url }}"
+          mkdir -p /tmp/extracted
+          unzip -o /tmp/codebase.zip -d /tmp/extracted
+          # Find the extracted directory (usually BIND-<commit-sha>/)
+          EXTRACTED_DIR=$(find /tmp/extracted -maxdepth 1 -type d | tail -1)
+          echo "Extracted to: $EXTRACTED_DIR"
+
+      - name: Copy changed files to site/
+        run: |
+          EXTRACTED_DIR=$(find /tmp/extracted -maxdepth 1 -type d | tail -1)
+          # Copy all site/ files from the zip
+          cp -f $EXTRACTED_DIR/site/index.html site/index.html
+          cp -f $EXTRACTED_DIR/site/events.html site/events.html
+          cp -f $EXTRACTED_DIR/site/our-story.html site/our-story.html
+          cp -f $EXTRACTED_DIR/site/community.html site/community.html
+          cp -f $EXTRACTED_DIR/site/achievements.html site/achievements.html
+          cp -f $EXTRACTED_DIR/site/safety.html site/safety.html
+          cp -f $EXTRACTED_DIR/site/join.html site/join.html
+          cp -f $EXTRACTED_DIR/site/store.html site/store.html
+          cp -f $EXTRACTED_DIR/site/contact.html site/contact.html
+          # Copy CSS
+          mkdir -p site/assets/css
+          cp -f $EXTRACTED_DIR/site/assets/css/style.css site/assets/css/style.css
+          echo "All files copied"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Update HTML files to use clean URLs
+        run: python3 scripts/update_clean_urls.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add site/
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Visual UI fixes: updated HTML and CSS from BIND-codebase-fixed.zip
+
+- 9 HTML files updated with visual/UI improvements
+- CSS updated with +575 bytes of style fixes
+- All SEO tags verified intact (canonical, OG, JSON-LD, meta description, H1)
+- update_clean_urls.py converted .html URLs to clean URLs at build time
+- No netlify.app references, no noindex directives"
+          git push
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy Worker
+        run: npx wrangler@4 deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
